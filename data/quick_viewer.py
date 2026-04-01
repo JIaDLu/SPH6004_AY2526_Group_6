@@ -24,7 +24,7 @@ for file_name in files:
     print(f"正在处理: {file_name}...")
     
     # 只读取前 1000 行
-    df_sample = pd.read_csv(input_path, nrows=1000)
+    df_sample = pd.read_csv(input_path, nrows=2000)
     
     # 导出到 processed 文件夹
     df_sample.to_csv(output_path, index=False)
