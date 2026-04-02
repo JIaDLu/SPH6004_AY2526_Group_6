@@ -17,6 +17,8 @@ Usage
     python main.py                        # full run
     python main.py --resume               # skip fitting; load saved preprocessors
     python main.py --epochs 50 --lr 5e-4
+
+    python -u main.py 2>&1 | tee ~/main.log
 """
 
 import argparse
@@ -43,7 +45,7 @@ from src.utils.constants           import CACHE_DIR, RANDOM_SEED
 
 def parse_args():
     p = argparse.ArgumentParser(description="ICU RLOS multimodal pipeline")
-    p.add_argument("--epochs",       type=int,   default=100)
+    p.add_argument("--epochs",       type=int,   default=10)
     p.add_argument("--batch_size",   type=int,   default=64)
     p.add_argument("--lr",           type=float, default=1e-3)
     p.add_argument("--weight_decay", type=float, default=1e-4)
