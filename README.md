@@ -43,7 +43,7 @@ project/
 
 ## Setup
 
-You can choose to use **Conda** or **uv** to manage your Python environment.（==Python Version 3.11==）。
+You can choose to use Conda 🛠️ or uv 🛠️ to manage your Python environment. (Python Version 3.11 ✅)
 
 - Option A: Conda
 
@@ -51,7 +51,7 @@ You can choose to use **Conda** or **uv** to manage your Python environment.（=
 
 # Create and activate the environment
 
-conda create -n sph6004_env python=3.10
+conda create -n sph6004_env python=3.11
 
 conda activate sph6004_env
 
