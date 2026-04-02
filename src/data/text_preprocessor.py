@@ -129,9 +129,21 @@ class TextPreprocessor:
         times  = np.array([t for t, _ in valid], dtype=float)
         embs   = np.stack([e for _, e in valid])           # (K, D)
         delta  = current_hour - times                       # (K,)
-        w      = np.exp(-delta)
-        w      = w / w.sum()                                # normalise
+
+        # exp(-delta) can underflow to 0 when delta is very large.
+        # Stabilise with log-sum-exp shift: subtract max(delta) before exp
+        # so the most-recent note always has weight exp(0) = 1.
+        delta_shifted = delta - delta.min()                # shift so min=0
+        w = np.exp(-delta_shifted)
+        w_sum = w.sum()
+        w = w / w_sum if w_sum > 0 else np.ones(len(valid)) / len(valid)
+
         result = (w[:, None] * embs).sum(axis=0)           # (D,)
+
+        # Final safety: replace any residual NaN with 0
+        if np.isnan(result).any():
+            result = np.zeros(self.embedding_dim, dtype=np.float32)
+
         return result.astype(np.float32), False
 
     # ── internal: ClinicalBERT encoding ──────────────────────────────────────

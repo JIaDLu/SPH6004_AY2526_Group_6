@@ -86,7 +86,7 @@ class TimeSeriesPreprocessor:
 
     def transform_stay(self, stay_df: pd.DataFrame) -> tuple[np.ndarray, list[str]]:
         """
-        Process all time steps for a single stay.
+        Process all time steps for a single stay.  因为有两种类型的缺失：t=1 NaN → 没有历史 → 用 median     t=5 NaN → 有历史 → 用 ffill
 
         Returns
         -------

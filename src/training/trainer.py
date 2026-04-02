@@ -141,7 +141,7 @@ class Trainer:
 
     def _train_one_epoch(self) -> float:
         self.model.train()
-        total_loss, n_batches = 0.0, 0
+        total_loss, n_batches, n_skipped = 0.0, 0, 0
 
         for batch in self.train_loader:
             ts_w, ts_l, s_f, t_e, n_f, labels = self._to_device(batch)
@@ -149,6 +149,12 @@ class Trainer:
             self.optimizer.zero_grad()
             preds = self.model(ts_w, ts_l, s_f, t_e, n_f)
             loss  = self.criterion(preds, labels)
+
+            # Skip batch if loss is NaN/Inf (e.g. corrupted embedding)
+            if not torch.isfinite(loss):
+                n_skipped += 1
+                continue
+
             loss.backward()
 
             if self.grad_clip:
@@ -157,6 +163,9 @@ class Trainer:
             self.optimizer.step()
             total_loss += loss.item()
             n_batches  += 1
+
+        if n_skipped > 0:
+            print(f"  [warn] Skipped {n_skipped} non-finite batches this epoch")
 
         return total_loss / max(n_batches, 1)
 

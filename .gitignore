@@ -209,3 +209,4 @@ __marimo__/
 #data 
 data/origin
 data/cache
+checkpoints/
