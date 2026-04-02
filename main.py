@@ -18,7 +18,7 @@ Usage
     python main.py --resume               # skip fitting; load saved preprocessors
     python main.py --epochs 50 --lr 5e-4
 
-    python -u main.py 2>&1 | tee ~/main.log
+    python -u main.py 2>&1 | tee ./main.log
 """
 
 import argparse
