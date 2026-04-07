@@ -1,70 +1,78 @@
 """
-multimodal.py – Multimodal ICU length-of-stay prediction model.
+multimodal.py – Stage 2 multimodal ICU RLOS model.
 
-Architecture
-────────────
-  Time series  →  LSTM               →  h_ts     (lstm_hidden,)
-  Static       →  Linear + ReLU      →  h_static (static_hidden,)
-  Text         →  [NO_NOTE swap]
-               →  Linear + ReLU      →  h_text   (text_hidden,)
-                                                    ↓ concat
-                                        Fusion MLP  →  scalar (RLOS)
+Supports three modality variants controlled by `variant`:
+  "ts_static"      : frozen TS encoder + static branch
+  "ts_text"        : frozen TS encoder + text branch
+  "ts_static_text" : frozen TS encoder + static + text  (full multimodal)
 
-NO_NOTE handling
-────────────────
-When no_note_flag == 1 the pre-computed BERT embedding is a zero vector.
-We replace it with a learnable nn.Parameter (no_note_emb) so the model
-can learn an explicit "no report yet" signal, rather than seeing silence.
+The TS encoder is always loaded from a Stage 1 checkpoint and frozen by
+default, guaranteeing a fair isolated contribution-analysis of each modality.
+
+Usage
+-----
+    encoder = build_ts_encoder(input_dim=ts_prep.feature_dim, **enc_cfg)
+    model   = MultimodalICUModel(
+        ts_encoder      = encoder,
+        static_feat_dim = static_prep.feature_dim,
+        text_emb_dim    = text_prep.embedding_dim,
+        variant         = "ts_static_text",
+        freeze_ts       = True,
+    )
+    model.load_ts_encoder("checkpoints/ts_lstm_best.pt")
 """
 
 import torch
 import torch.nn as nn
+
+VALID_VARIANTS = ("ts_static", "ts_text", "ts_static_text")
 
 
 class MultimodalICUModel(nn.Module):
 
     def __init__(
         self,
-        ts_feat_dim:    int,
+        ts_encoder:      nn.Module,
         static_feat_dim: int,
-        text_emb_dim:   int,
-        lstm_hidden:    int = 64,
-        lstm_layers:    int = 2,
-        static_hidden:  int = 32,
-        text_hidden:    int = 64,
-        fusion_hidden:  int = 128,
-        dropout:        float = 0.2,
+        text_emb_dim:    int,
+        variant:         str   = "ts_static_text",
+        static_hidden:   int   = 32,
+        text_hidden:     int   = 64,
+        fusion_hidden:   int   = 128,
+        dropout:         float = 0.2,
+        freeze_ts:       bool  = True,
     ):
         super().__init__()
+        assert variant in VALID_VARIANTS, \
+            f"variant must be one of {VALID_VARIANTS}, got '{variant}'"
 
-        # ── Time-series branch ────────────────────────────────────────────
-        self.ts_lstm = nn.LSTM(
-            input_size  = ts_feat_dim,
-            hidden_size = lstm_hidden,
-            num_layers  = lstm_layers,
-            batch_first = True,
-            dropout     = dropout if lstm_layers > 1 else 0.0,
-        )
+        self.variant      = variant
+        self.ts_encoder   = ts_encoder
+        ts_hidden         = ts_encoder.hidden_dim
+        fusion_in         = ts_hidden
 
-        # ── Static branch ─────────────────────────────────────────────────
-        self.static_encoder = nn.Sequential(
-            nn.Linear(static_feat_dim, static_hidden),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-        )
+        # ── Static branch (optional) ──────────────────────────────────────
+        self.use_static = "static" in variant
+        if self.use_static:
+            self.static_encoder = nn.Sequential(
+                nn.Linear(static_feat_dim, static_hidden),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+            )
+            fusion_in += static_hidden
 
-        # ── Text branch ───────────────────────────────────────────────────
-        # Learnable embedding used when no note is available at time t
-        self.no_note_emb = nn.Parameter(torch.randn(text_emb_dim) * 0.01)
-
-        self.text_encoder = nn.Sequential(
-            nn.Linear(text_emb_dim, text_hidden),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-        )
+        # ── Text branch (optional) ────────────────────────────────────────
+        self.use_text = "text" in variant
+        if self.use_text:
+            self.no_note_emb  = nn.Parameter(torch.randn(text_emb_dim) * 0.01)
+            self.text_encoder = nn.Sequential(
+                nn.Linear(text_emb_dim, text_hidden),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+            )
+            fusion_in += text_hidden
 
         # ── Fusion head ───────────────────────────────────────────────────
-        fusion_in = lstm_hidden + static_hidden + text_hidden
         self.fusion = nn.Sequential(
             nn.Linear(fusion_in, fusion_hidden),
             nn.ReLU(),
@@ -72,38 +80,64 @@ class MultimodalICUModel(nn.Module):
             nn.Linear(fusion_hidden, 1),
         )
 
+        if freeze_ts:
+            self.freeze_ts_encoder()
+
+    # ── Weight loading & freezing ─────────────────────────────────────────────
+
+    def load_ts_encoder(self, ckpt_path: str) -> None:
+        """Load TSEncoder weights from a Stage 1 TSOnlyModel checkpoint."""
+        state     = torch.load(ckpt_path, map_location="cpu", weights_only=True)
+        enc_state = {
+            k[len("encoder."):]: v
+            for k, v in state.items()
+            if k.startswith("encoder.")
+        }
+        missing, unexpected = self.ts_encoder.load_state_dict(enc_state, strict=True)
+        if missing or unexpected:
+            raise RuntimeError(
+                f"TS encoder load mismatch.\n"
+                f"  Missing   : {missing}\n"
+                f"  Unexpected: {unexpected}"
+            )
+        print(f"[MultimodalICUModel] TS encoder loaded ← {ckpt_path}")
+
+    def freeze_ts_encoder(self) -> None:
+        for p in self.ts_encoder.parameters():
+            p.requires_grad = False
+        print("[MultimodalICUModel] TS encoder frozen.")
+
+    def unfreeze_ts_encoder(self) -> None:
+        for p in self.ts_encoder.parameters():
+            p.requires_grad = True
+        print("[MultimodalICUModel] TS encoder unfrozen.")
+
     # ── forward ───────────────────────────────────────────────────────────────
 
     def forward(
         self,
-        ts_window:    torch.Tensor,   # (B, W, D_ts)
-        ts_lengths:   torch.Tensor,   # (B,)  int — valid time steps
-        static_feat:  torch.Tensor,   # (B, D_static)
-        text_emb:     torch.Tensor,   # (B, D_text)   zeros when no note
-        no_note_flag: torch.Tensor,   # (B,)  1.0 = no note
-    ) -> torch.Tensor:                # (B,)  predicted RLOS
+        ts_window:    torch.Tensor,          # (B, W, D_ts)
+        ts_lengths:   torch.Tensor,          # (B,)
+        static_feat:  torch.Tensor | None,   # (B, D_static) or None
+        text_emb:     torch.Tensor | None,   # (B, D_text)   or None
+        no_note_flag: torch.Tensor | None,   # (B,)          or None
+    ) -> torch.Tensor:                       # (B,)  log1p(RLOS)
 
-        # ── Time series ───────────────────────────────────────────────────
-        packed = nn.utils.rnn.pack_padded_sequence(
-            ts_window,
-            ts_lengths.clamp(min=1).cpu(),
-            batch_first    = True,
-            enforce_sorted = False,
-        )
-        _, (hn, _) = self.ts_lstm(packed)
-        h_ts = hn[-1]                               # last-layer hidden (B, H)
+        # TS (frozen branch uses no_grad internally)
+        ts_frozen = not any(p.requires_grad for p in self.ts_encoder.parameters())
+        ctx = torch.no_grad() if ts_frozen else torch.enable_grad()
+        with ctx:
+            h_ts = self.ts_encoder(ts_window, ts_lengths)      # (B, ts_hidden)
 
-        # ── Static ────────────────────────────────────────────────────────
-        h_static = self.static_encoder(static_feat) # (B, static_hidden)
+        parts = [h_ts]
 
-        # ── Text  (swap zeros for learnable NO_NOTE embedding) ────────────
-        # When flag=1: effective_emb = 0 + 1 * no_note_emb = no_note_emb
-        # When flag=0: effective_emb = text_emb + 0         = text_emb
-        flag         = no_note_flag.unsqueeze(-1)                  # (B, 1)
-        eff_text_emb = text_emb + flag * self.no_note_emb          # (B, D_text)
-        h_text       = self.text_encoder(eff_text_emb)             # (B, text_hidden)
+        if self.use_static:
+            parts.append(self.static_encoder(static_feat))
 
-        # ── Fusion ────────────────────────────────────────────────────────
-        fused = torch.cat([h_ts, h_static, h_text], dim=-1)       # (B, fusion_in)
-        pred  = self.fusion(fused).squeeze(-1)                     # (B,)
-        return pred
+        if self.use_text:
+            flag         = no_note_flag.unsqueeze(-1)
+            eff_emb      = text_emb + flag * self.no_note_emb
+            parts.append(self.text_encoder(eff_emb))
+
+        fused = torch.cat(parts, dim=-1)
+        return self.fusion(fused).squeeze(-1)                   # (B,)

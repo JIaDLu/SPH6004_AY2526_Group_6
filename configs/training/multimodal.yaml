@@ -1,0 +1,40 @@
+# ── Stage 2: Multimodal training config ───────────────────────────────────────
+# The TS encoder is frozen (loaded from Stage 1); only the new modality branches
+# and fusion head are trained.
+
+# ── Optimisation ──────────────────────────────────────────────────────────────
+epochs:       100
+batch_size:   256          # smaller than Stage 1 (text emb adds memory overhead)
+lr:           3e-4
+weight_decay: 1e-4
+patience:     10
+grad_clip:    1.0
+num_workers:  4
+seed:         42
+
+# ── Loss (same as Stage 1 for fair comparison) ───────────────────────────────
+loss: log_mse
+
+# ── Stage 1 checkpoint to inherit ─────────────────────────────────────────────
+# Set this to the winning arch from Stage 1 before running Stage 2.
+# e.g. "checkpoints/ts_lstm_best.pt"
+ts_ckpt: null          # MUST be set via --ts_ckpt at runtime
+
+# ── TS Encoder config (must match Stage 1 winning arch exactly) ───────────────
+# Injected at runtime via --ts_arch flag (reads configs/model/ts_encoder/{arch}.yaml)
+
+# ── Modality ablation variants ─────────────────────────────────────────────────
+# Controlled at runtime via --variant flag.
+# ts_static   : TS (frozen) + Static
+# ts_text     : TS (frozen) + Text
+# ts_static_text : TS (frozen) + Static + Text  (full multimodal)
+
+# ── Paths ─────────────────────────────────────────────────────────────────────
+ckpt_dir:    checkpoints
+output_root: outputs
+result_dir:  results
+
+# ── Weights & Biases ──────────────────────────────────────────────────────────
+wandb:
+  project: sph6004
+  entity:  lujiadong-nus

@@ -110,7 +110,7 @@ class ICUDataset(Dataset):
 
                 # Text embedding at current hour
                 curr_hour          = elapsed_hours[t]
-                text_emb, no_note  = text_prep.get_embedding(stay_id, curr_hour)
+                text_emb, no_note  = text_prep.get_embedding(stay_id, curr_hour)  # 这里没有兼容在production phase的处理 但目前只评估数据集的结果 可以忽略！
 
                 # RLOS label
                 label = float(max(0.0, icu_los_hours - curr_hour))
