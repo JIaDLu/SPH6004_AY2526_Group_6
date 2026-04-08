@@ -33,28 +33,19 @@ You can choose to use Conda 🛠️ or uv 🛠️ to manage your Python environm
 
 ```bash
 # Create and activate the environment
-
 conda create -n sph6004_env python=3.11
-
 conda activate sph6004_env
-
 # Install dependencies
-
 pip install -r requirements.txt
-
 ```
 
 - Option B: UV (recommended, faster)
 
 ```bash
 # Create a virtual environment and synchronize dependencies
-
 uv venv -p 3.11
-
 source .venv/bin/activate
-
 uv pip install -r requirements.txt
-
 ```
 
 **2. Prepare the Data**
@@ -74,34 +65,6 @@ python main.py
 ```
 
 > **Note:** The pipeline is idempotent. It automatically skips preprocessing and training steps if their respective checkpoints already exist.
-
------
-
-## 🛠️ Environment Setup
-
-You can manage your Python 3.11 environment using either **Conda** or **uv** (recommended for speed).
-
-\<details\>
-\<summary\>\<b\>Option A: Conda\</b\>\</summary\>
-
-```bash
-conda create -n sph6004_env python=3.11
-conda activate sph6004_env
-pip install -r requirements.txt
-```
-
-\</details\>
-
-\<details\>
-\<summary\>\<b\>Option B: uv (Recommended)\</b\>\</summary\>
-
-```bash
-uv venv -p 3.11
-source .venv/bin/activate
-uv pip install -r requirements.txt
-```
-
-\</details\>
 
 -----
 
