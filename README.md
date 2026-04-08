@@ -1,19 +1,16 @@
-\<div align="center"\>
-\<img src="[https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/heart-pulse.svg](https://www.google.com/search?q=https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/heart-pulse.svg)" width="100" height="100" alt="ICU RLOS Prediction Logo"\>
+<div align="center">
+<img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/heart-pulse.svg" width="100" height="100" alt="ICU RLOS Prediction Logo">
+<h1>ICU Remaining Length-of-Stay Prediction</h1>
+<p><em>A Multimodal Deep Learning Pipeline for MIMIC-IV</em></p>
+<p>
+<a href="https://www.python.org/downloads/release/python-3110/"><img src="https://img.shields.io/badge/python-3.11-blue.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.11"></a>
+<a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white" alt="PyTorch"></a>
+<a href="https://physionet.org/content/mimiciv/2.2/"><img src="https://img.shields.io/badge/dataset-MIMIC--IV-1abc9c.svg?style=for-the-badge&logo=medrt&logoColor=white" alt="MIMIC-IV"></a>
+<a href="https://github.com/huggingface/transformers"><img src="https://img.shields.io/badge/%F0%9F%A4%97_Transformers-gray?style=for-the-badge&color=FFD21E" alt="HuggingFace"></a>
+</p>
+</div>
 
-\<h1\>ICU Remaining Length-of-Stay Prediction\</h1\>
-
-\<p\>\<em\>A Multimodal Deep Learning Pipeline for MIMIC-IV\</em\>\</p\>
-
-\<p\>
-\<a href="[https://www.python.org/downloads/release/python-3110/](https://www.python.org/downloads/release/python-3110/)"\>\<img src="[https://img.shields.io/badge/python-3.11-blue.svg?style=for-the-badge\&logo=python\&logoColor=white](https://www.google.com/search?q=https://img.shields.io/badge/python-3.11-blue.svg%3Fstyle%3Dfor-the-badge%26logo%3Dpython%26logoColor%3Dwhite)" alt="Python 3.11"\>\</a\>
-\<a href="[https://pytorch.org/](https://pytorch.org/)"\>\<img src="[https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge\&logo=PyTorch\&logoColor=white](https://www.google.com/search?q=https://img.shields.io/badge/PyTorch-%2523EE4C2C.svg%3Fstyle%3Dfor-the-badge%26logo%3DPyTorch%26logoColor%3Dwhite)" alt="PyTorch"\>\</a\>
-\<a href="[https://physionet.org/content/mimiciv/2.2/](https://physionet.org/content/mimiciv/2.2/)"\>\<img src="[https://img.shields.io/badge/dataset-MIMIC--IV-1abc9c.svg?style=for-the-badge\&logo=medrt\&logoColor=white](https://www.google.com/search?q=https://img.shields.io/badge/dataset-MIMIC--IV-1abc9c.svg%3Fstyle%3Dfor-the-badge%26logo%3Dmedrt%26logoColor%3Dwhite)" alt="MIMIC-IV"\>\</a\>
-\<a href="[https://github.com/huggingface/transformers](https://github.com/huggingface/transformers)"\>\<img src="[https://img.shields.io/badge/%F0%9F%A4%97\_Transformers-gray?style=for-the-badge\&color=FFD21E](https://www.google.com/search?q=https://img.shields.io/badge/%25F0%259F%25A4%2597_Transformers-gray%3Fstyle%3Dfor-the-badge%26color%3DFFD21E)" alt="HuggingFace"\>\</a\>
-\</p\>
-\</div\>
-
-\<hr\>
+<hr>
 
 This project implements a comprehensive multimodal deep learning pipeline designed to predict a patient's **remaining time-to-discharge** (RLOS) from the Intensive Care Unit (ICU). By leveraging the **MIMIC-IV** database, the model dynamically fuses three distinct data modalities to achieve highly accurate prognostic predictions:
 
@@ -21,18 +18,43 @@ This project implements a comprehensive multimodal deep learning pipeline design
 | :--- | :--- | :--- |
 | 📈 **Time Series** | `MIMIC-IV-time_series` | **LSTM / GRU / Multi-Head Attention (MHA)** |
 | 🧑‍⚕️ **Demographics** | `MIMIC-IV-static` | **Linear Encoder** |
-| 📝 **Radiology Notes**| `MIMIC-IV-text` | **Bio\_ClinicalBERT → Linear Encoder** |
-
+| 📝 **Radiology Notes**| `MIMIC-IV-text` | **Bio_ClinicalBERT → Linear Encoder** |
 -----
 
 ## 🚀 Quick Start
 
 You can verify the best experimental results out-of-the-box in just three steps. This will run the optimal configuration: **MHA Encoder** combined with the **ts\_static\_text** (Time Series + Demographics + Radiology Notes) variant.
 
-**1. Install dependencies**
+**1. Env & Install dependencies**
+
+You can choose to use Conda 🛠️ or uv 🛠️ to manage your Python environment. (Python Version 3.11 ✅)
+
+- Option A: Conda
 
 ```bash
+# Create and activate the environment
+
+conda create -n sph6004_env python=3.11
+
+conda activate sph6004_env
+
+# Install dependencies
+
 pip install -r requirements.txt
+
+```
+
+- Option B: UV (recommended, faster)
+
+```bash
+# Create a virtual environment and synchronize dependencies
+
+uv venv -p 3.11
+
+source .venv/bin/activate
+
+uv pip install -r requirements.txt
+
 ```
 
 **2. Prepare the Data**
@@ -180,39 +202,58 @@ python data/quick_viewer.py
 
 ## 🏗️ Project Structure
 
-\<details\>
-\<summary\>\<b\>Click to expand full directory tree\</b\>\</summary\>
-
-```text
-project/
-├── main.py                                ← pipeline entry point (quick verify)
-├── requirements.txt
-├── configs/                               ← YAML config files
-│   ├── model/ts_encoder/                  ← LSTM, GRU, MHA hyperparams
-│   └── training/                          ← Baseline & Multimodal training configs
-├── scripts/
-│   ├── prepare_data.py                    ← Fit + save preprocessors
-│   ├── training/                          
-│   │   ├── baseline.py                    ← Stage 1 training script
-│   │   └── multimodal.py                  ← Stage 2 training script
-│   └── evaluate/                          
-│       ├── compare_baselines.py           
-│       └── compare_multimodal.py          
-├── src/
-│   ├── data/                              ← Loaders, splitters, datasets, preprocessors
-│   ├── models/                            ← PyTorch models (Encoders, TS-Only, Multimodal)
-│   ├── training/                          ← LogMSELoss, Trainer loop
-│   └── utils/                             ← Constants, Metrics (MAE/RMSE/R²), Persistence
-├── data/
-│   ├── origin/                            ← Raw CSVs (Ignored)
-│   └── processed/                         ← Lightweight subsets (Ignored)
-├── checkpoints/                           ← Model weights & preprocessors (Ignored)
-├── outputs/                               ← Per-run artefacts (configs, histories)
-└── results/                               ← Output CSV metrics and evaluation plots
 ```
-
-\</details\>
-
+project/
+├── main.py                                ← quick verify best result
+├── requirements.txt
+│
+├── configs/
+│   ├── model/ts_encoder/
+│   │   ├── lstm.yaml                      ← LSTM hyperparams + rationale
+│   │   ├── gru.yaml                       ← GRU hyperparams + rationale
+│   │   └── mha.yaml                       ← MHA hyperparams + rationale
+│   └── training/
+│       ├── baseline.yaml                  ← Stage 1 training config
+│       └── multimodal.yaml                ← Stage 2 training config
+│
+├── scripts/
+│   ├── prepare_data.py                    ← Step 0: fit + save preprocessors
+│   ├── training/
+│   │   ├── baseline.py                    ← Stage 1: train one arch
+│   │   └── multimodal.py                  ← Stage 2: train one variant
+│   └── evaluate/
+│       ├── compare_baselines.py           ← Stage 1 comparison + plots
+│       └── compare_multimodal.py          ← Stage 1 + 2 combined comparison
+│
+├── src/
+│   ├── data/
+│   │   ├── loader.py                      ← load & filter cohort
+│   │   ├── splitter.py                    ← 8:1:1 stay_id split
+│   │   ├── static_preprocessor.py        ← demographics features
+│   │   ├── ts_preprocessor.py            ← TS features (LOCF, masks, ever_measured)
+│   │   ├── text_preprocessor.py          ← Bio_ClinicalBERT + time-aware pooling
+│   │   ├── ts_dataset.py                 ← TSOnlyDataset  (Stage 1, fast)
+│   │   └── dataset.py                    ← ICUDataset full multimodal (Stage 2)
+│   ├── models/
+│   │   ├── encoders/ts_encoder.py        ← LSTM / GRU / MHA — single source
+│   │   ├── ts_only.py                    ← Stage 1 model
+│   │   └── multimodal.py                 ← Stage 2 model (frozen TS + modalities)
+│   ├── training/
+│   │   ├── loss.py                       ← LogMSELoss + decode_log_pred
+│   │   └── trainer.py                    ← generic Trainer (legacy, used by main.py v1)
+│   └── utils/
+│       ├── constants.py                  ← clip ranges, mappings, paths
+│       ├── metrics.py                    ← MAE, RMSE, MedAE, R²
+│       └── persistence.py               ← save/load preprocessors
+│
+├── data/origin/                          ← raw CSVs (gitignored)
+├── checkpoints/                          ← model checkpoints (gitignored)
+├── outputs/                              ← per-run artefacts (gitignored)
+└── results/
+    ├── ts_baseline_comparison.csv
+    ├── multimodal_comparison.csv
+    └── plots/
+```
 -----
 
 ## ⚙️ Key Design Decisions
