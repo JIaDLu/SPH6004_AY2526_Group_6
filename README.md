@@ -244,3 +244,17 @@ Customizing the pipeline is straightforward. Refer to this mapping:
 | **Tune Model Architectures** | `configs/model/ts_encoder/*.yaml` |
 | **Modify Training Dynamics**| `configs/training/*.yaml` or CLI arguments |
 | **Update Loss / Metrics** | `src/training/loss.py` or `src/utils/metrics.py` |
+
+-----
+## 📋 Data Declaration
+
+The dataset is derived from [MIMIC-IV](https://physionet.org/content/mimiciv/) and is **not included**(.gitignore) in this repository due to data access agreements. Access requires completing the required CITI training and signing the PhysioNet data use agreement.
+
+------
+
+## 📜 License
+
+**© National University of Singapore (NUS). All Rights Reserved.**
+
+**This Repo is strictly for official use by NUS Course SPH6004 AY25/26 Group 6 only.**  
+Unauthorized distribution, reproduction, or sharing is strictly prohibited.
