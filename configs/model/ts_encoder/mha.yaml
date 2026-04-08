@@ -1,1 +1,24 @@
-#mha
+# ── Multi-Head Attention (Transformer Encoder) ────────────────────────────────
+# Self-attention over the 24-step window with a causal-agnostic global view.
+# Particularly effective when relationships between distant time steps matter
+# (e.g. early deterioration followed by stabilisation then recovery).
+#
+# Sizing rationale:
+#   hidden_dim 128: matches RNN baselines for fair comparison; also the
+#                   projected dimension after input_proj (input_dim → 128)
+#   num_layers  2 : two stacked TransformerEncoderLayers; Pre-LayerNorm
+#                   (norm_first=True) for stable training without warm-up
+#   num_heads   4 : 128 / 4 = 32 per head — captures 4 distinct attention
+#                   patterns; 32-dim heads are large enough for 24-step seqs
+#   dropout    0.2: applied within each TransformerEncoderLayer (attention
+#                   dropout + FFN dropout)
+#
+# Note: hidden_dim must be divisible by num_heads (128 % 4 == 0 ✓).
+
+arch:       mha
+hidden_dim: 128
+num_layers: 2
+num_heads:  4
+dropout:    0.2
+
+# input_dim is injected at runtime from ts_prep.feature_dim — do not set here.

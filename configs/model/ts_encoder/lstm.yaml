@@ -1,1 +1,19 @@
 # lstm
+# ── LSTM Encoder ──────────────────────────────────────────────────────────────
+# Standard bidirectional-ready LSTM. Strong inductive bias for sequential
+# medical signals; handles irregular sampling well via LOCF pre-processing.
+#
+# Sizing rationale (input_dim ≈ 33 for MIMIC-IV after preprocessing):
+#   hidden_dim 128: 4× input_dim — sufficient capacity without over-parameterising
+#   num_layers  2 : two-layer stack captures both local dynamics (layer 1)
+#                   and longer-term trends (layer 2); deeper stacks rarely help
+#                   on 24-step windows
+#   dropout    0.2: applied between LSTM layers; modest regularisation for
+#                   the ~57 k training stays
+
+arch:       lstm
+hidden_dim: 128
+num_layers: 2
+dropout:    0.2
+
+# input_dim is injected at runtime from ts_prep.feature_dim — do not set here.

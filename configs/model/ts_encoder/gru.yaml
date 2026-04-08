@@ -1,1 +1,14 @@
-# gru
+# ── GRU Encoder ───────────────────────────────────────────────────────────────
+# Gated Recurrent Unit — fewer parameters than LSTM (no cell state) while
+# retaining comparable sequence-modelling ability. Often converges faster.
+# Kept identical capacity to LSTM for a fair Stage 1 comparison.
+#
+# Sizing rationale: same as LSTM (see lstm.yaml) — intentionally matched so
+# the only variable in Stage 1 is architecture, not parameter count.
+
+arch:       gru
+hidden_dim: 128
+num_layers: 2
+dropout:    0.2
+
+# input_dim is injected at runtime from ts_prep.feature_dim — do not set here.
