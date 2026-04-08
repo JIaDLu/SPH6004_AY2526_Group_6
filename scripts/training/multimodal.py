@@ -84,6 +84,16 @@ def load_yaml(path: str) -> dict:
     with open(path) as f:
         return yaml.safe_load(f) or {}
 
+def _coerce_floats(cfg: dict, keys: tuple) -> dict:
+    """
+    Cast specified keys to float.
+    Guards against YAML parsing scientific notation (e.g. "3e-4") as str.
+    """
+    for k in keys:
+        if k in cfg and cfg[k] is not None:
+            cfg[k] = float(cfg[k])
+    return cfg
+
 
 def merge_configs(args: argparse.Namespace) -> dict:
     enc_cfg_path = args.encoder_cfg or str(
@@ -98,12 +108,16 @@ def merge_configs(args: argparse.Namespace) -> dict:
         if val is not None:
             train_cfg[key] = val
 
+    # Ensure numeric types are correct (YAML may parse "3e-4" as str)
+    _coerce_floats(train_cfg, ("lr", "weight_decay", "grad_clip"))
+
     return {
-        "ts_arch":  args.ts_arch,
-        "variant":  args.variant,
-        "encoder":  enc_cfg,
-        "training": train_cfg,
-        "stage":    "multimodal",
+        "ts_arch":          args.ts_arch,
+        "variant":          args.variant,
+        "encoder":          enc_cfg,
+        "encoder_cfg_path": enc_cfg_path,
+        "training":         train_cfg,
+        "stage":            "multimodal",
     }
 
 

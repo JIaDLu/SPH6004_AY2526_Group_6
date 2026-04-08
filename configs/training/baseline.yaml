@@ -1,16 +1,14 @@
 # ── Optimisation ──────────────────────────────────────────────────────────────
 epochs:       100
-batch_size:   512        # TS-only is light; larger batch = more stable gradients
-lr:           3e-4
-weight_decay: 1e-4
-patience:     10         # early-stop on val MAE (original space)
+batch_size:   512
+lr:           0.0003       # 3e-4  — written as decimal; YAML parses "3e-4" as str
+weight_decay: 0.0001       # 1e-4
+patience:     10
 grad_clip:    1.0
 num_workers:  4
 seed:         42
 
 # ── Loss ──────────────────────────────────────────────────────────────────────
-# Training in log1p space to handle heavy-tailed RLOS distribution.
-# Evaluation always in original hours space.
 loss: log_mse
 
 # ── Paths ─────────────────────────────────────────────────────────────────────

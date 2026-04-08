@@ -84,6 +84,16 @@ def load_yaml(path: str) -> dict:
     with open(path) as f:
         return yaml.safe_load(f) or {}
 
+def _coerce_floats(cfg: dict, keys: tuple) -> dict:
+    """
+    Cast specified keys to float.
+    Guards against YAML parsing scientific notation (e.g. "3e-4") as str.
+    """
+    for k in keys:
+        if k in cfg and cfg[k] is not None:
+            cfg[k] = float(cfg[k])
+    return cfg
+
 
 def merge_configs(args: argparse.Namespace) -> dict:
     """Merge encoder yaml + training yaml + CLI overrides."""
@@ -100,11 +110,15 @@ def merge_configs(args: argparse.Namespace) -> dict:
         if val is not None:
             train_cfg[key] = val
 
+    # Ensure numeric types are correct (YAML may parse "3e-4" as str)
+    _coerce_floats(train_cfg, ("lr", "weight_decay", "grad_clip"))
+
     return {
-        "arch":     args.arch,
-        "encoder":  enc_cfg,
-        "training": train_cfg,
-        "stage":    "ts_only",
+        "arch":             args.arch,
+        "encoder":          enc_cfg,
+        "encoder_cfg_path": encoder_cfg_path,
+        "training":         train_cfg,
+        "stage":            "ts_only",
     }
 
 
