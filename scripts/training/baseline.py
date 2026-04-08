@@ -19,6 +19,11 @@ outputs/{arch}_{timestamp}/
     history.json      per-epoch train_loss / val_mae
     model_best.pt     best checkpoint (val MAE, original space)
 checkpoints/ts_{arch}_best.pt   ← canonical path used by Stage 2
+
+CLI: 
+python -u scripts/training/baseline.py \
+    --arch lstm \
+    2>&1 | tee log/20260408120732_training_baseline.log
 """
 
 import argparse

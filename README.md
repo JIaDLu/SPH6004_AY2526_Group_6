@@ -1,178 +1,242 @@
-# ICU Remaining Length-of-Stay Prediction
+\<div align="center"\>
+\<img src="[https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/heart-pulse.svg](https://www.google.com/search?q=https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/heart-pulse.svg)" width="100" height="100" alt="ICU RLOS Prediction Logo"\>
 
-Multimodal deep learning pipeline for predicting a patient's **remaining time-to-discharge** (RLOS) from the ICU using three data modalities from MIMIC-IV:
+\<h1\>ICU Remaining Length-of-Stay Prediction\</h1\>
 
-|Modality|Source table|Model branch|
-|---|---|---|
-|Time series|`MIMIC-IV-time_series`|LSTM|
-|Demographics|`MIMIC-IV-static`|Linear encoder|
-|Radiology notes|`MIMIC-IV-text`|Bio_ClinicalBERT → Linear encoder|
+\<p\>\<em\>A Multimodal Deep Learning Pipeline for MIMIC-IV\</em\>\</p\>
 
----
+\<p\>
+\<a href="[https://www.python.org/downloads/release/python-3110/](https://www.python.org/downloads/release/python-3110/)"\>\<img src="[https://img.shields.io/badge/python-3.11-blue.svg?style=for-the-badge\&logo=python\&logoColor=white](https://www.google.com/search?q=https://img.shields.io/badge/python-3.11-blue.svg%3Fstyle%3Dfor-the-badge%26logo%3Dpython%26logoColor%3Dwhite)" alt="Python 3.11"\>\</a\>
+\<a href="[https://pytorch.org/](https://pytorch.org/)"\>\<img src="[https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge\&logo=PyTorch\&logoColor=white](https://www.google.com/search?q=https://img.shields.io/badge/PyTorch-%2523EE4C2C.svg%3Fstyle%3Dfor-the-badge%26logo%3DPyTorch%26logoColor%3Dwhite)" alt="PyTorch"\>\</a\>
+\<a href="[https://physionet.org/content/mimiciv/2.2/](https://physionet.org/content/mimiciv/2.2/)"\>\<img src="[https://img.shields.io/badge/dataset-MIMIC--IV-1abc9c.svg?style=for-the-badge\&logo=medrt\&logoColor=white](https://www.google.com/search?q=https://img.shields.io/badge/dataset-MIMIC--IV-1abc9c.svg%3Fstyle%3Dfor-the-badge%26logo%3Dmedrt%26logoColor%3Dwhite)" alt="MIMIC-IV"\>\</a\>
+\<a href="[https://github.com/huggingface/transformers](https://github.com/huggingface/transformers)"\>\<img src="[https://img.shields.io/badge/%F0%9F%A4%97\_Transformers-gray?style=for-the-badge\&color=FFD21E](https://www.google.com/search?q=https://img.shields.io/badge/%25F0%259F%25A4%2597_Transformers-gray%3Fstyle%3Dfor-the-badge%26color%3DFFD21E)" alt="HuggingFace"\>\</a\>
+\</p\>
+\</div\>
 
-## Project structure
+\<hr\>
 
-```
-project/
-├── main.py                          ← pipeline entry point
-├── requirements.txt
-├── data/
-│   └── origin/                      ← place the three raw CSVs here
-│       ├── MIMIC-IV-static(Group Assignment).csv
-│       ├── MIMIC-IV-text(Group Assignment).csv
-│       └── MIMIC-IV-time_series(Group Assignment).csv
-└── src/
-    ├── data/
-    │   ├── loader.py                ← load & filter (icu_death_flag == 0)
-    │   ├── splitter.py              ← 8:1:1 stay_id split
-    │   ├── static_preprocessor.py  ← StaticPreprocessor
-    │   ├── ts_preprocessor.py      ← TimeSeriesPreprocessor
-    │   ├── text_preprocessor.py    ← TextPreprocessor (ClinicalBERT + cache)
-    │   └── dataset.py              ← ICUDataset + build_dataloaders
-    ├── models/
-    │   └── multimodal.py           ← MultimodalICUModel
-    ├── training/
-    │   └── trainer.py              ← Trainer (early stopping, checkpointing)
-    └── utils/
-        ├── constants.py            ← all config, clip ranges, mappings
-        ├── metrics.py              ← MAE, RMSE, MedAE, R²
-        └── persistence.py          ← save / load fitted preprocessors
-```
+This project implements a comprehensive multimodal deep learning pipeline designed to predict a patient's **remaining time-to-discharge** (RLOS) from the Intensive Care Unit (ICU). By leveraging the **MIMIC-IV** database, the model dynamically fuses three distinct data modalities to achieve highly accurate prognostic predictions:
 
----
+| Modality | Source Table | Deep Learning Branch |
+| :--- | :--- | :--- |
+| 📈 **Time Series** | `MIMIC-IV-time_series` | **LSTM / GRU / Multi-Head Attention (MHA)** |
+| 🧑‍⚕️ **Demographics** | `MIMIC-IV-static` | **Linear Encoder** |
+| 📝 **Radiology Notes**| `MIMIC-IV-text` | **Bio\_ClinicalBERT → Linear Encoder** |
 
-## Setup
+-----
 
-You can choose to use Conda 🛠️ or uv 🛠️ to manage your Python environment. (Python Version 3.11 ✅)
+## 🚀 Quick Start
 
-- Option A: Conda
+You can verify the best experimental results out-of-the-box in just three steps. This will run the optimal configuration: **MHA Encoder** combined with the **ts\_static\_text** (Time Series + Demographics + Radiology Notes) variant.
+
+**1. Install dependencies**
 
 ```bash
-
-# Create and activate the environment
-
-conda create -n sph6004_env python=3.11
-
-conda activate sph6004_env
-
-# Install dependencies
-
 pip install -r requirements.txt
-
 ```
 
-- Option B: UV (recommended, faster)
+**2. Prepare the Data**
+Place the three raw MIMIC-IV CSVs in the `data/origin/` directory:
 
-```bash
-
-# Create a virtual environment and synchronize dependencies
-
-uv venv -p 3.11
-
-source .venv/bin/activate
-
-uv pip install -r requirements.txt
-
+```text
+data/origin/
+├── MIMIC-IV-static(Group Assignment).csv
+├── MIMIC-IV-text(Group Assignment).csv
+└── MIMIC-IV-time_series(Group Assignment).csv
 ```
----
 
-## Run
-
-**Full pipeline** (fit preprocessors + train + evaluate):
+**3. Run the Pipeline**
 
 ```bash
 python main.py
 ```
 
-**Resume** (skip fitting; reuse saved preprocessors from a previous run):
+> **Note:** The pipeline is idempotent. It automatically skips preprocessing and training steps if their respective checkpoints already exist.
+
+-----
+
+## 🛠️ Environment Setup
+
+You can manage your Python 3.11 environment using either **Conda** or **uv** (recommended for speed).
+
+\<details\>
+\<summary\>\<b\>Option A: Conda\</b\>\</summary\>
 
 ```bash
-python main.py --resume
+conda create -n sph6004_env python=3.11
+conda activate sph6004_env
+pip install -r requirements.txt
 ```
 
-**Common options:**
+\</details\>
 
-```
---epochs       Max training epochs          (default: 100)
---batch_size   Mini-batch size              (default: 64)
---lr           Learning rate               (default: 1e-3)
---patience     Early-stopping patience     (default: 10)
---ckpt_dir     Checkpoint directory        (default: checkpoints/)
-```
+\<details\>
+\<summary\>\<b\>Option B: uv (Recommended)\</b\>\</summary\>
 
----
-
-## Data pipeline details
-### Quick View
-Since the original MIMIC-IV dataset is extremely large, a sampling script is provided to facilitate quick code debugging and feature inspection.
-
-1. Ensure the original data is stored in the `data/origin/` directory.
-2. Run the script to extract the first 2000 lines of each file:
-    ```bash
-    python data/quick_viewer.py
-    ```
-3. Once finished, the sampled lightweight files will be generated in the `data/processed/` directory.
-
-### Cohort filter
-
-Only ICU stays where the patient was **discharged alive** (`icu_death_flag == 0`) are kept. Dead patients are excluded because the modelling target is time-to-discharge, not time-to-death.
-
-### Train / val / test split
-
-Shuffled at the **stay_id level** (8 : 1 : 1). No patient appears in more than one split.
-
-### Time-series preprocessing
-
-Missing rates are computed on training data only. Each feature is handled according to its missing rate:
-
-|Rate|Strategy|
-|---|---|
-|< 15 %|Clip → LOCF → head-fill with train median + observation mask|
-|15 – 90 %|Same as above|
-|≥ 90 %|`ever_measured[t]` binary (was this feature ever observed up to time t?)|
-
-### Windowing
-
-For each time step `t`, a **fixed-length window of W = 24 hours** is fed to the LSTM. Steps before the first recorded hour are zero-padded; `ts_length` tells the LSTM where real data ends.
-
-**Label:** `RLOS(t) = icu_los_hours − elapsed_hours(t)`, clamped to ≥ 0.
-
-### Text (radiology notes)
-
-Notes are encoded once with **Bio_ClinicalBERT** and cached to `data/cache/text_embeddings.pkl`. At each time step `t`, only notes whose inferred timestamp ≤ `t` are used (no future leakage). Multiple valid notes are combined with **time-aware weighted pooling** (`weight ∝ exp(−Δt)`).
-
-When no notes are yet available, a learnable `NO_NOTE` embedding is used instead of silence.
-
-### Static features
-
-Demographic features are broadcast to every windowed sample from the same stay (global context). The age `StandardScaler` is fit on training data only.
-
----
-
-## Model
-
-```
-Time series   →  LSTM (64 hidden, 2 layers)     →  h_ts     (64,)
-Static        →  Linear(22→32) + ReLU           →  h_static (32,)
-Text          →  [NO_NOTE swap] + Linear(768→64) →  h_text   (64,)
-                                                     │ concat
-                                            Linear(160→128) + ReLU
-                                            Linear(128→1)
-                                            ↓
-                                        RLOS prediction (hours)
+```bash
+uv venv -p 3.11
+source .venv/bin/activate
+uv pip install -r requirements.txt
 ```
 
----
+\</details\>
 
-## Extending the code
+-----
 
-|What you want to change|File to edit|
-|---|---|
-|Feature selection / cleaning|`src/data/static_preprocessor.py` or `src/data/ts_preprocessor.py`|
-|Clip ranges for clinical features|`src/utils/constants.py` → `CLINICAL_CLIP_RANGES`|
-|Categorical mappings (race, insurance …)|`src/utils/constants.py`|
-|Window size|`src/utils/constants.py` → `WINDOW_SIZE`|
-|BERT model|`src/utils/constants.py` → `BERT_MODEL_NAME`|
-|Model architecture|`src/models/multimodal.py`|
-|Training hyperparameters|CLI flags or `src/training/trainer.py`|
-|Evaluation metrics|`src/utils/metrics.py`|
+## 🔬 Full Experiment Workflow
+
+If you wish to reproduce the full architectural search and modality ablation study, follow this step-by-step workflow:
+
+### Step 0: Data Preprocessing
+
+Fits all feature preprocessors on the training split and caches ClinicalBERT embeddings. Must be run once before any training script.
+
+```bash
+python -m scripts.prepare_data
+```
+
+*(Outputs: `checkpoints/preprocessors.pkl`, `data/cache/text_embeddings.pkl`)*
+
+### Stage 1: Time-Series Baseline Search
+
+Train independent encoder architectures on time-series features to identify the strongest temporal backbone.
+
+```bash
+python -m scripts.training.baseline --arch lstm
+python -m scripts.training.baseline --arch gru
+python -m scripts.training.baseline --arch mha
+```
+
+Evaluate and compare baselines:
+
+```bash
+python -m scripts.evaluate.compare_baselines
+```
+
+### Stage 2: Multimodal Ablation
+
+Using the Stage 1 winner (e.g., `mha`), freeze the TS encoder weights and train the new modality branches to analyze feature contributions.
+
+```bash
+python -m scripts.training.multimodal --ts_arch mha --variant ts_static
+python -m scripts.training.multimodal --ts_arch mha --variant ts_text
+python -m scripts.training.multimodal --ts_arch mha --variant ts_static_text
+```
+
+Compare all Stage 1 + Stage 2 results comprehensively:
+
+```bash
+python -m scripts.evaluate.compare_multimodal --ts_arch mha
+```
+
+-----
+
+## 🧠 Model Architecture
+
+```mermaid
+graph TD;
+    TS[Time Series Windows] --> L[LSTM/GRU/MHA Encoder]
+    S[Static Demographics] --> F1[Linear 22→32 + ReLU]
+    T[Radiology Notes] --> B[Bio_ClinicalBERT] --> F2[Linear 768→64]
+    
+    L --> H_TS[h_ts]
+    F1 --> H_STAT[h_static]
+    F2 --> H_TXT[h_text]
+    
+    H_TS --> CONCAT
+    H_STAT --> CONCAT
+    H_TXT --> CONCAT
+    
+    CONCAT --> D1[Linear 160→128 + ReLU]
+    D1 --> D2[Linear 128→1]
+    D2 --> P[RLOS Prediction]
+```
+
+-----
+
+## 📊 Data Pipeline Details
+
+### Quick Data Viewer
+
+For rapid debugging and feature inspection without loading the massive MIMIC-IV dataset:
+
+```bash
+python data/quick_viewer.py
+```
+
+*This extracts the first 2000 lines and saves lightweight files to `data/processed/`.*
+
+### Core Processing Logic
+
+  * **Cohort Filter:** Retains only ICU stays where patients were discharged alive (`icu_death_flag == 0`). Target is time-to-discharge, not time-to-death.
+  * **Split Strategy:** 8:1:1 (Train:Val:Test) strictly partitioned at the `stay_id` level to prevent patient data leakage.
+  * **Time-Series Handling:** Missing data handling depends on the missing rate:
+      * `< 15%` or `15-90%`: Clip outliers → Last Observation Carried Forward (LOCF) → Head-fill with train median + Observation Mask.
+      * `≥ 90%`: Replaced with an `ever_measured[t]` binary indicator.
+  * **Windowing:** Fixed 24-hour look-back window. Labels are calculated as `RLOS(t) = icu_los_hours − elapsed_hours(t)`, clamped to ≥ 0.
+  * **Text Caching & Pooling:** Radiology notes are embedded via Bio\_ClinicalBERT. Notes are fused using **time-aware weighted pooling** (`weight ∝ exp(−Δt)`). A learnable `NO_NOTE` token handles time steps without notes to avoid silence.
+
+-----
+
+## 🏗️ Project Structure
+
+\<details\>
+\<summary\>\<b\>Click to expand full directory tree\</b\>\</summary\>
+
+```text
+project/
+├── main.py                                ← pipeline entry point (quick verify)
+├── requirements.txt
+├── configs/                               ← YAML config files
+│   ├── model/ts_encoder/                  ← LSTM, GRU, MHA hyperparams
+│   └── training/                          ← Baseline & Multimodal training configs
+├── scripts/
+│   ├── prepare_data.py                    ← Fit + save preprocessors
+│   ├── training/                          
+│   │   ├── baseline.py                    ← Stage 1 training script
+│   │   └── multimodal.py                  ← Stage 2 training script
+│   └── evaluate/                          
+│       ├── compare_baselines.py           
+│       └── compare_multimodal.py          
+├── src/
+│   ├── data/                              ← Loaders, splitters, datasets, preprocessors
+│   ├── models/                            ← PyTorch models (Encoders, TS-Only, Multimodal)
+│   ├── training/                          ← LogMSELoss, Trainer loop
+│   └── utils/                             ← Constants, Metrics (MAE/RMSE/R²), Persistence
+├── data/
+│   ├── origin/                            ← Raw CSVs (Ignored)
+│   └── processed/                         ← Lightweight subsets (Ignored)
+├── checkpoints/                           ← Model weights & preprocessors (Ignored)
+├── outputs/                               ← Per-run artefacts (configs, histories)
+└── results/                               ← Output CSV metrics and evaluation plots
+```
+
+\</details\>
+
+-----
+
+## ⚙️ Key Design Decisions
+
+| Decision | Implementation Rationale |
+| :--- | :--- |
+| **Log-space Training** | Targets are transformed via `log1p(RLOS)` to gracefully handle the heavy-tailed length-of-stay distribution. |
+| **Strict Data Isolation** | Preprocessors fit *only* on train splits. Validation/Test sets are scaled strictly using train statistics. |
+| **Stage 2 Feature Freezing** | TS encoder weights are loaded from Stage 1 and frozen during multimodal ablation to ensure a fair analysis of new modality contributions. |
+| **Single Encoder Interface** | `src/models/encoders/ts_encoder.py` hosts all 3 sequence models with identical input/output shapes for hot-swapping via YAML. |
+| **W\&B Integration** | Automated metric logging and run tracking (requires `WANDB_API_KEY` environment variable). |
+
+-----
+
+## 🔧 Extending the Code
+
+Customizing the pipeline is straightforward. Refer to this mapping:
+
+| Target Modification | Target File |
+| :--- | :--- |
+| **Add/Remove Features** | `src/data/static_preprocessor.py` or `src/ts_preprocessor.py` |
+| **Adjust Clinical Thresholds** | `src/utils/constants.py` → `CLINICAL_CLIP_RANGES` |
+| **Change Window Size** | `src/utils/constants.py` → `WINDOW_SIZE` |
+| **Swap BERT Backbone** | `src/utils/constants.py` → `BERT_MODEL_NAME` |
+| **Tune Model Architectures** | `configs/model/ts_encoder/*.yaml` |
+| **Modify Training Dynamics**| `configs/training/*.yaml` or CLI arguments |
+| **Update Loss / Metrics** | `src/training/loss.py` or `src/utils/metrics.py` |

@@ -16,7 +16,9 @@ data/cache/text_embeddings.pkl  ← ClinicalBERT embeddings for all notes
 
 Usage
 -----
-python -m scripts.prepare_data
+python -m scripts.prepare_data  
+
+python -u scripts/prepare_data.py 2>&1 | tee log/20260408114652_prepare_data.log
 """
 
 import sys
