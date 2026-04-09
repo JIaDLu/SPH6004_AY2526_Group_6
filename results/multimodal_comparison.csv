@@ -1,0 +1,5 @@
+stage,variant,ts_arch,best_val_mae,test_MAE,test_RMSE,test_MedAE,test_R2,run_dir
+multimodal,ts_text,gru,64.8097,60.1004,113.2986,25.2169,0.4686,ts_text_gru_20260408_1645
+multimodal,ts_static_text,gru,66.0915,60.5129,113.0527,24.939,0.4709,ts_static_text_gru_20260409_0752
+multimodal,ts_static,gru,75.4532,71.3691,135.7374,28.7294,0.2373,ts_static_gru_20260408_1600
+ts_only,ts_only,gru,75.467,71.5351,135.0398,29.242,0.2451,gru_20260408_1038
