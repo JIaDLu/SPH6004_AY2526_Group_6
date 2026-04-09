@@ -75,6 +75,8 @@ python main.py
 
 ## 🔬 Full Experiment Workflow
 
+![image-20260409180605611](https://cdn.jsdelivr.net/gh/JIaDLu/BlogImg@main/img/20260409182331432.png)
+
 If you wish to reproduce the full architectural search and modality ablation study, follow this step-by-step workflow:
 
 ### Step 0: Data Preprocessing
