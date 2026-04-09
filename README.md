@@ -19,6 +19,11 @@ This project implements a comprehensive multimodal deep learning pipeline design
 | 📈 **Time Series** | `MIMIC-IV-time_series` | **LSTM / GRU / Multi-Head Attention (MHA)** |
 | 🧑‍⚕️ **Demographics** | `MIMIC-IV-static` | **Linear Encoder** |
 | 📝 **Radiology Notes**| `MIMIC-IV-text` | **Bio_ClinicalBERT → Linear Encoder** |
+
+Our Contribution:
+
+![image-20260409180605611](https://cdn.jsdelivr.net/gh/JIaDLu/BlogImg@main/img/multimodal_bar.png)
+
 -----
 
 ## 🚀 Quick Start
